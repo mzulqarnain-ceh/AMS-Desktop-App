@@ -52,7 +52,7 @@ namespace AMS
 
             string subjectName = txtSubject.Text.Trim();
 
-            // LOGIC FIXED: Check if Subject already exists
+            // Check if Subject already exists
             DataTable check = DatabaseHelper.GetData(
                 "SELECT COUNT(*) AS Total FROM Subjects WHERE SubjectName=@subject",
                 new Microsoft.Data.SqlClient.SqlParameter[] { new("@subject", subjectName) });
@@ -97,7 +97,7 @@ namespace AMS
 
             string subjectName = txtSubject.Text.Trim();
 
-            // LOGIC FIXED: Check if updated Subject Name exists for ANOTHER subject
+            // Check if updated Subject Name exists for ANOTHER subject
             DataTable check = DatabaseHelper.GetData(
                 "SELECT COUNT(*) AS Total FROM Subjects WHERE SubjectName=@subject AND SubjectID != @id",
                 new Microsoft.Data.SqlClient.SqlParameter[] {
@@ -151,7 +151,7 @@ namespace AMS
 
             if (result == DialogResult.Yes)
             {
-                // LOGIC FIXED: Pehle is subject ki attendance delete hogi, phir yeh subject delete hoga
+                // Pehle attendance delete hogi, phir subject
                 string query =
                     "DELETE FROM Attendance WHERE SubjectID=@id; " +
                     "DELETE FROM Subjects WHERE SubjectID=@id;";
@@ -210,13 +210,15 @@ namespace AMS
             txtSearch.Clear();
             selectedSubjectID = -1;
             txtSubject.Focus();
-            // Yahan LoadSubjects() hataya kyunke btnClear_Click mein sirf form saaf karna kaafi hai. 
-            // LoadSubjects hum explicitly search clear karne pe call kar rahay hain.
             LoadSubjects();
         }
 
+        // ════════════════════════════════════════
+        // ── Validate Inputs (UPDATED with new checks) ──
+        // ════════════════════════════════════════
         private bool ValidateInputs()
         {
+            // ── 1. Subject Name empty check ──
             if (string.IsNullOrEmpty(txtSubject.Text.Trim()))
             {
                 MessageBox.Show("Please enter subject name!",
@@ -226,10 +228,33 @@ namespace AMS
                 return false;
             }
 
+            // ── 2. Subject Name — sirf letters, numbers aur spaces ──
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    txtSubject.Text.Trim(), @"^[a-zA-Z0-9\s]+$"))
+            {
+                MessageBox.Show("Subject name should contain letters and numbers only!\nNo special characters allowed.",
+                    "⚠️ Invalid Subject Name", MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                txtSubject.Focus();
+                return false;
+            }
+
+            // ── 3. Teacher Name empty check ──
             if (string.IsNullOrEmpty(txtTeacher.Text.Trim()))
             {
                 MessageBox.Show("Please enter teacher name!",
                     "⚠️ Warning", MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                txtTeacher.Focus();
+                return false;
+            }
+
+            // ── 4. Teacher Name — sirf letters aur spaces hone chahiye ──
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    txtTeacher.Text.Trim(), @"^[a-zA-Z\s]+$"))
+            {
+                MessageBox.Show("Teacher name should contain letters only!\nNumbers are not allowed.",
+                    "⚠️ Invalid Teacher Name", MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 txtTeacher.Focus();
                 return false;

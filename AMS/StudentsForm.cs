@@ -60,7 +60,7 @@ namespace AMS
 
             string roll = txtRoll.Text.Trim();
 
-            // LOGIC FIXED: Check if Roll Number already exists
+            // Check if Roll Number already exists
             DataTable check = DatabaseHelper.GetData(
                 "SELECT COUNT(*) AS Total FROM Students WHERE RollNumber=@roll",
                 new Microsoft.Data.SqlClient.SqlParameter[] { new("@roll", roll) });
@@ -108,7 +108,7 @@ namespace AMS
 
             string roll = txtRoll.Text.Trim();
 
-            // LOGIC FIXED: Check if updated Roll Number exists for ANOTHER student
+            // Check if updated Roll Number exists for ANOTHER student
             DataTable check = DatabaseHelper.GetData(
                 "SELECT COUNT(*) AS Total FROM Students WHERE RollNumber=@roll AND StudentID != @id",
                 new Microsoft.Data.SqlClient.SqlParameter[] {
@@ -165,8 +165,7 @@ namespace AMS
 
             if (result == DialogResult.Yes)
             {
-                // LOGIC FIXED: Pehle is bache ki attendance delete hogi, phir yeh bacha delete hoga
-                // Is se "Foreign Key Constraint" wala SQL error nahi aayega.
+                // Pehle attendance delete hogi, phir student
                 string query =
                     "DELETE FROM Attendance WHERE StudentID=@id; " +
                     "DELETE FROM Students WHERE StudentID=@id;";
@@ -229,12 +228,15 @@ namespace AMS
             txtSearch.Clear();
             selectedStudentID = -1;
             txtName.Focus();
-            LoadStudents(); // LoadStudents yahan automatically call ho jayega
+            LoadStudents();
         }
 
-        // ── Validate ──
+        // ════════════════════════════════════════
+        // ── Validate Inputs (UPDATED with new checks) ──
+        // ════════════════════════════════════════
         private bool ValidateInputs()
         {
+            // ── 1. Name empty check ──
             if (string.IsNullOrEmpty(txtName.Text.Trim()))
             {
                 MessageBox.Show("Please enter student name!",
@@ -244,6 +246,18 @@ namespace AMS
                 return false;
             }
 
+            // ── 2. Name — sirf letters aur spaces hone chahiye ──
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    txtName.Text.Trim(), @"^[a-zA-Z\s]+$"))
+            {
+                MessageBox.Show("Student name should contain letters only! Numbers are not allowed.",
+                    "⚠️ Invalid Name", MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                txtName.Focus();
+                return false;
+            }
+
+            // ── 3. Roll Number empty check ──
             if (string.IsNullOrEmpty(txtRoll.Text.Trim()))
             {
                 MessageBox.Show("Please enter roll number!",
@@ -253,6 +267,7 @@ namespace AMS
                 return false;
             }
 
+            // ── 4. Class empty check ──
             if (string.IsNullOrEmpty(txtClass.Text.Trim()))
             {
                 MessageBox.Show("Please enter class/section!",
@@ -260,6 +275,23 @@ namespace AMS
                     MessageBoxIcon.Warning);
                 txtClass.Focus();
                 return false;
+            }
+
+            // ── 5. Contact — exactly 11 digits, sirf numbers ──
+            if (!string.IsNullOrEmpty(txtContact.Text.Trim()))
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                        txtContact.Text.Trim(), @"^\d{11}$"))
+                {
+                    MessageBox.Show(
+                        "Contact number must be exactly 11 digits!\n" +
+                        "Example: 03001234567\n" +
+                        "No spaces, dashes, or letters allowed.",
+                        "⚠️ Invalid Contact", MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    txtContact.Focus();
+                    return false;
+                }
             }
 
             return true;

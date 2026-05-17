@@ -19,7 +19,7 @@ namespace AMS
         private void AttendanceForm_Load(object sender, EventArgs e)
         {
             LoadSubjects();
-            LoadClasses(); // Nayi line: Form load hote hi classes bhi load hongi
+            LoadClasses();
         }
 
         // ── Load Subjects in Dropdown ──
@@ -32,7 +32,7 @@ namespace AMS
             cmbSubject.ValueMember = "SubjectID";
         }
 
-        // ── Load Classes in Dropdown (NEW) ──
+        // ── Load Classes in Dropdown ──
         private void LoadClasses()
         {
             DataTable dt = DatabaseHelper.GetData("SELECT DISTINCT ClassName FROM Students");
@@ -60,11 +60,22 @@ namespace AMS
                 return;
             }
 
+            // ── NEW: Future date pe students load nahi honge ──
+            if (dtpDate.Value.Date > DateTime.Today)
+            {
+                MessageBox.Show(
+                    "Cannot load students for a future date!\n" +
+                    "Please select today's date or a past date.",
+                    "⚠️ Invalid Date", MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                dtpDate.Value = DateTime.Today;
+                return;
+            }
+
             dgvAttendance.Rows.Clear();
 
             string selectedClass = cmbClass.SelectedValue.ToString();
 
-            // LOGIC FIXED: Ab sirf selected class ke bache aayenge
             DataTable dt = DatabaseHelper.GetData(
                 "SELECT StudentID, StudentName, RollNumber, ClassName FROM Students WHERE ClassName = @cls ORDER BY StudentName",
                 new Microsoft.Data.SqlClient.SqlParameter[]
@@ -95,6 +106,18 @@ namespace AMS
                     "Please load students first!",
                     "⚠️ Warning", MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
+                return;
+            }
+
+            // ── NEW: Save karte waqt bhi future date check ──
+            if (dtpDate.Value.Date > DateTime.Today)
+            {
+                MessageBox.Show(
+                    "Attendance cannot be saved for a future date!\n" +
+                    "Please select today's date or a past date.",
+                    "⚠️ Invalid Date", MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                dtpDate.Value = DateTime.Today;
                 return;
             }
 
